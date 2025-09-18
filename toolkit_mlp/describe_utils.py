@@ -79,5 +79,3 @@ def describe(file: str) -> pd.DataFrame:
 
     for i in feat_type:
         split_columns(i, df, feature_list)
-        # df_described[i] = describe_column(df[i])
-    # return df_described

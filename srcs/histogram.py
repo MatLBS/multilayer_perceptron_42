@@ -13,5 +13,6 @@ def main():
     except AssertionError as error:
         print(AssertionError.__name__ + ":", error)
 
+
 if __name__ == "__main__":
     main()
