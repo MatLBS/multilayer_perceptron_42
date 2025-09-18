@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from toolkit_mlp.utils import _train_test_split, preprocess_data
 
 
-def draw_histogram(file: str) -> None:
+def train_model(file: str) -> None:
     df = pd.read_csv(file, header=None)
 
     X = preprocess_data(df)
@@ -18,7 +18,7 @@ def draw_histogram(file: str) -> None:
 def main():
     df = pd.read_csv("data.csv")
     # print(df.describe())
-    draw_histogram("data.csv")
+    train_model("data.csv")
 
 if __name__ == "__main__":
     main()

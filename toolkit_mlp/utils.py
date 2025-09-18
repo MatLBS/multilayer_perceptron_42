@@ -33,18 +33,18 @@ def draw_histogram(file: str) -> None:
     columns = df.columns[2:]
 
     feature_list = [
-        "radius",
-        "texture",
-        "perimeter",
-        "area",
-        "smoothness",
-        "compactness",
-        "concavity",
-        "concavePoints",
-        "symmetry",
-        "fractalDimension",
+        "Radius",
+        "Texture",
+        "Perimeter",
+        "Area",
+        "Smoothness",
+        "Compactness",
+        "Concavity",
+        "Concave Points",
+        "Symmetry",
+        "Fractal Dimension",
     ]
-    feat_type = ["Mean", "Standard error", "Largest"]
+    feat_type = ["mean", "standard error", "largest"]
 
     fig, ax = plt.subplots(6, 5, figsize=(14, 10))
     k = 0
@@ -54,7 +54,7 @@ def draw_histogram(file: str) -> None:
             if k < len(columns):
                 ax[i][j].hist(benign[columns[k]], color='blue', bins=20, alpha=0.4)
                 ax[i][j].hist(malignant[columns[k]], color='red', bins=20, alpha=0.4)
-                ax[i][j].set_title(columns[k])
+                ax[i][j].set_title(f"{feature_list[k % 10]} {feat_type[k // 10]}")
             else:
                 ax[i][j].axis('off')
             k += 1
