@@ -1,26 +1,46 @@
 import numpy as np
+from toolkit_mlp.utils import plot_losses
 
 class MLP:
-    def __init__(self, hidden_layer_sizes=(30, 30), learning_rate=0.01, n_epochs=1000, batch_size=32):
+    def __init__(self, hidden_layer_sizes=(30, 30), learning_rate=0.001, n_epochs=1000, batch_size=32):
         self.hidden_layer_sizes = hidden_layer_sizes
         self.learning_rate = learning_rate
         self.n_epochs = n_epochs
         self.batch_size = batch_size
         self.weights = []
         self.biases = []
-        self.weights_history = []
-        self.biases_history = []
-        self.loss_history = []
+        self.train_loss_history = []
+        self.valid_loss_history = []
 
     def _relu(self, x):
         return np.maximum(0, x)
     
-    def softmax(self, x):
-        return np.exp(x) / np.sum(np.exp(x))
+    def _relu_derivative(self, x):
+        return (x > 0).astype(float)
+    
+    def _softmax(self, x):
+        # return np.exp(x) / np.sum(np.exp(x))
+        shifted_x = x - np.max(x, axis=-1, keepdims=True)
+    
+        exp_x = np.exp(shifted_x)
+        sum_exp_x = np.sum(exp_x, axis=-1, keepdims=True)
+        return exp_x / sum_exp_x
+    
+    def _sigmoid(self, z):
+        """Sigmoid activation function"""
+        return 1 / (1 + np.exp(-z))
+    
+    def categorical_cross_entropy(self, y_true, y_pred):
+        epsilon = 1e-12  # sécurité pour éviter log(0)
+        loss = 0
+        for i in range(len(y_pred)):
+            idx = np.argmax(y_true[i])
+            p = np.clip(y_pred[i][idx], epsilon, 1. - epsilon)
+            loss += -np.log(p)
+        return loss / len(y_pred)
 
     def _initialize_parameters(self, n_features):
         layer_sizes = [n_features] + list(self.hidden_layer_sizes) + [2]
-        # print("Layer sizes:", layer_sizes)
         self.weights = []
         self.biases = []
 
@@ -31,12 +51,10 @@ class MLP:
             self.weights.append(np.random.uniform(-limit, limit, (fan_in, fan_out)))
             self.biases.append(np.zeros((1, fan_out)))
 
-    def _forward_pass(self, X):
+    def _feedforward(self, X):
         activations = [X]
-        # print("Input shape:", X.shape)
         zs = []
         for i in range(len(self.weights) - 1):
-            print("self.weights[i].shape:", self.weights[i].shape)
             z = np.dot(activations[-1], self.weights[i]) + self.biases[i]
             zs.append(z)
             a = self._relu(z)
@@ -44,21 +62,31 @@ class MLP:
 
         z_output = np.dot(activations[-1], self.weights[-1]) + self.biases[-1]
         zs.append(z_output)
-        y_pred = self._relu(z_output)
+        y_pred = self._softmax(z_output)
         activations.append(y_pred)
 
         return activations, zs
     
-    def fit(self, X, y):
+    def _backpropagation(self, X_batch, y_batch, activations, zs):
+
+        delta = activations[-1] - y_batch
+
+        dW = (1/self.batch_size) * np.dot(activations[-2].T, delta)
+        db = (1/self.batch_size) * np.sum(delta)
+        self.weights[-1] -= self.learning_rate * dW
+        self.biases[-1] -= self.learning_rate * db
+        
+        for l in range(len(self.weights) - 2, -1, -1):
+            delta = np.dot(delta, self.weights[l+1].T) * self._relu_derivative(zs[l])
+            dW = (1/self.batch_size) * np.dot(activations[l].T, delta)
+            db = (1/self.batch_size) * np.sum(delta)
+
+            self.weights[l] -= self.learning_rate * dW
+            self.biases[l] -= self.learning_rate * db
+    
+    def fit(self, X, y, X_valid, y_valid):
         n_samples, n_features = X.shape
-        y = np.asarray(y).reshape(-1, 1)
-        X = np.asarray(X)
         self._initialize_parameters(n_features)
-        # self.weights_history.append([w.copy() for w in self.weights])
-        # self.biases_history.append([b.copy() for b in self.biases])
-        # activations, _ = self._forward_pass(X)
-        # initial_loss = self._compute_loss(y, activations[-1])
-        # self.loss_history.append(initial_loss)
 
         for epoch in range(self.n_epochs):
             # shuffle datasets
@@ -71,30 +99,17 @@ class MLP:
                 X_batch = X_shuffled[i:i + self.batch_size]
                 y_batch = y_shuffled[i:i + self.batch_size]
 
-                activations, zs = self._forward_pass(X_batch)
-                y_pred = activations[-1]
+                activations, zs = self._feedforward(X_batch)
 
-                delta = y_pred - y_batch
-                dW = np.dot(activations[-2].T, delta) / X_batch.shape[0]
-                db = np.sum(delta, axis=0) / X_batch.shape[0]
-                self.weights[-1] -= self.learning_rate * dW
-                self.biases[-1] -= self.learning_rate * db
+                self._backpropagation(X_batch, y_batch, activations, zs)
+            
+            y_pred_train = self._feedforward(X)[0][-1]  # prédiction sur tout X
+            train_loss = self.categorical_cross_entropy(y, y_pred_train)
+            self.train_loss_history.append(train_loss)
 
-                for l in range(len(self.weights) - 2, -1, -1):
-                    delta = np.dot(delta, self.weights[l+1].T) * self._relu_derivative(zs[l]) # d_activation(z)
-                    dW = np.dot(activations[l].T, delta) / X_batch.shape[0]
-                    db = np.sum(delta, axis=0) / X_batch.shape[0]
+            y_pred_valid = self._feedforward(X_valid)[0][-1]  # sur tout X_valid
+            valid_loss = self.categorical_cross_entropy(y_valid, y_pred_valid)
+            self.valid_loss_history.append(valid_loss)
+            print(f"Epoch {epoch+1}/{self.n_epochs}, Train Loss: {train_loss}, Valid Loss: {valid_loss}")
 
-                    self.weights[l] -= self.learning_rate * dW
-                    self.biases[l] -= self.learning_rate * db
-
-            self.weights_history.append([w.copy() for w in self.weights])
-            self.biases_history.append([b.copy() for b in self.biases])
-
-            activations, _ = self._forward_pass(X)
-            epoch_loss = self._compute_loss(y, activations[-1])
-            self.loss_history.append(epoch_loss)
-
-            if (epoch + 1) % 100 == 0:
-                print(f"Epoch {epoch+1}/{self.n_epochs}, Loss: {epoch_loss:.4f}")
-        return self
+        plot_losses(self.train_loss_history, self.valid_loss_history)

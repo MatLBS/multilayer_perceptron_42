@@ -13,21 +13,22 @@ def train_model(file: str) -> None:
 
     X = preprocess_data(df)
     y = df[1].values
+    y = np.array([[1, 0] if label == 'M' else [0, 1] for label in y])
     # y = np.array([[1, 0] if label == 'B' else [0, 1] for label in y])
-    X_train, X_test = _train_test_split(X)
-    y_train, y_test = _train_test_split(y)
+    X_train, X_valid = _train_test_split(X)
+    y_train, y_valid = _train_test_split(y)
 
     # print("Training set size:", X_train.shape, y_train.shape)
     # print("Test set size:", X_test.shape, y_test.shape)
 
     model = MLP(
         hidden_layer_sizes=(30, 30, ),
-        learning_rate=0.001,
+        learning_rate=0.0001,
         n_epochs=1000,
         batch_size=32
     )
 
-    model.fit(X_train, y_train)
+    model.fit(X_train, y_train, X_valid, y_valid)
 
 
 

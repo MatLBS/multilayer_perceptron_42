@@ -1,4 +1,5 @@
 from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import StandardScaler
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -18,10 +19,11 @@ def _train_test_split(arr, ratio=0.8):
 
 def preprocess_data(df):
     imputer = SimpleImputer(strategy="mean")
+    scaler = StandardScaler()
 
     X = df.drop(columns=[0, 1], axis=1)
     X = imputer.fit_transform(X)
-
+    X = scaler.fit_transform(X)
     return X
 
 
@@ -59,4 +61,15 @@ def draw_histogram(file: str) -> None:
                 ax[i][j].axis('off')
             k += 1
     plt.tight_layout()
+    plt.show()
+
+
+def plot_losses(train_loss_history, valid_loss_history):
+    plt.plot(train_loss_history, label="Train Loss")
+    plt.plot(valid_loss_history, label="Valid Loss")
+    plt.title("Loss Function Convergence")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.legend()
+    plt.grid(True)
     plt.show()
