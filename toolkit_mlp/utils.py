@@ -68,7 +68,7 @@ def plot_graphs(train_loss_history, valid_loss_history, train_accuracy_history, 
 
     fig, ax = plt.subplots(1, 2, figsize=(12, 5))
     ax[0].plot(train_loss_history, label="Train Loss")
-    # ax[0].plot(valid_loss_history, label="Valid Loss")
+    ax[0].plot(valid_loss_history, label="Valid Loss")
     ax[0].set_title("Loss Function Convergence")
     ax[0].set_xlabel("Epochs")
     ax[0].set_ylabel("Loss")

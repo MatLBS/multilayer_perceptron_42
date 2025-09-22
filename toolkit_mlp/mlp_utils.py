@@ -3,13 +3,16 @@ from toolkit_mlp.utils import plot_graphs
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 class MLP:
-    def __init__(self, hidden_layer_sizes=(30, 30), learning_rate=0.01, n_epochs=1000, batch_size=32):
+    def __init__(self, hidden_layer_sizes=(30, 30), learning_rate=0.01, n_epochs=1000, batch_size=32, keep_rate=0.8, output_size=2):
         self.hidden_layer_sizes = hidden_layer_sizes
         self.learning_rate = learning_rate
+        self.output_size = output_size
         self.n_epochs = n_epochs
         self.batch_size = batch_size
+        self.keep_rate = keep_rate
         self.weights = []
         self.biases = []
+        self.dropout_masks = []
         self.train_loss_history = []
         self.valid_loss_history = []
         self.train_accuracy_history = []
@@ -35,7 +38,7 @@ class MLP:
         return loss
 
     def _initialize_parameters(self, n_features):
-        layer_sizes = [n_features] + list(self.hidden_layer_sizes) + [2]
+        layer_sizes = [n_features] + list(self.hidden_layer_sizes) + [self.output_size]
         self.weights = []
         self.biases = []
 
@@ -46,13 +49,20 @@ class MLP:
             self.weights.append(np.random.uniform(-limit, limit, (fan_in, fan_out)))
             self.biases.append(np.zeros((1, fan_out)))
 
-    def _feedforward(self, X):
+    def _feedforward(self, X, training=True):
         activations = [X]
         zs = []
+        self.dropout_masks = []
         for i in range(len(self.weights) - 1):
             z = np.dot(activations[-1], self.weights[i]) + self.biases[i]
             zs.append(z)
             a = self._relu(z)
+            if training:
+                mask = (np.random.rand(*a.shape) < self.keep_rate).astype(float)
+                self.dropout_masks.append(mask)
+                a = a * mask / self.keep_rate
+            else:
+                self.dropout_masks.append(np.ones_like(a))
             activations.append(a)
 
         z_output = np.dot(activations[-1], self.weights[-1]) + self.biases[-1]
@@ -61,18 +71,17 @@ class MLP:
         activations.append(y_pred)
 
         return activations, zs
-    
+
     def _backpropagation(self, X_batch, y_batch, activations, zs):
-
         delta = activations[-1] - y_batch
-
-        dW = (1/self.batch_size) * np.dot(activations[-2].T, delta)
+        dW = (1/self.batch_size) * np.dot(activations[-2].T, delta) 
         db = (1/self.batch_size) * np.sum(delta)
         self.weights[-1] -= self.learning_rate * dW
         self.biases[-1] -= self.learning_rate * db
         
         for l in range(len(self.weights) - 2, -1, -1):
             delta = np.dot(delta, self.weights[l+1].T) * self._relu_derivative(zs[l])
+            delta = delta * self.dropout_masks[l]
             dW = (1/self.batch_size) * np.dot(activations[l].T, delta)
             db = (1/self.batch_size) * np.sum(delta)
 
@@ -99,18 +108,17 @@ class MLP:
                 X_batch = X_shuffled[i:i + self.batch_size]
                 y_batch = y_shuffled[i:i + self.batch_size]
 
-                activations, zs = self._feedforward(X_batch)
+                activations, zs = self._feedforward(X_batch, True)
                 self._backpropagation(X_batch, y_batch, activations, zs)
 
-            activations, _ = self._feedforward(X)
+            activations, _ = self._feedforward(X, False)
             train_loss = self._binary_cross_entropy(y, activations[-1])
             self.train_loss_history.append(train_loss)
             y_pred = np.argmax(activations[-1], axis=1)
             y_true = np.argmax(y, axis=1)
             self.train_accuracy_history.append(accuracy_score(y_true, y_pred))
 
-
-            activations, _ = self._feedforward(X_valid)
+            activations, _ = self._feedforward(X_valid, False)
             valid_loss = self._binary_cross_entropy(y_valid, activations[-1])
             self.valid_loss_history.append(valid_loss)
             y_pred = np.argmax(activations[-1], axis=1)
