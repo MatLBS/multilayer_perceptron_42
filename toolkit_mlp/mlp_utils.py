@@ -2,7 +2,7 @@ import numpy as np
 from toolkit_mlp.utils import plot_losses
 
 class MLP:
-    def __init__(self, hidden_layer_sizes=(30, 30), learning_rate=0.001, n_epochs=1000, batch_size=32):
+    def __init__(self, hidden_layer_sizes=(30, 30), learning_rate=0.01, n_epochs=1000, batch_size=32):
         self.hidden_layer_sizes = hidden_layer_sizes
         self.learning_rate = learning_rate
         self.n_epochs = n_epochs
@@ -38,6 +38,19 @@ class MLP:
             p = np.clip(y_pred[i][idx], epsilon, 1. - epsilon)
             loss += -np.log(p)
         return loss / len(y_pred)
+    
+    def predict_proba(self, X):
+        activations, _ = self._feedforward(X)
+        return activations[-1]
+    
+    def predict(self, X, threshold=0.5):
+        probabilities = self.predict_proba(X)
+        return (probabilities >= threshold).astype(int).flatten() # for 1D output
+    
+    def _compute_loss(self, y_true, y_pred):
+        y_pred = np.clip(y_pred, 1e-10, 1 - 1e-10)
+        loss = -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+        return loss
 
     def _initialize_parameters(self, n_features):
         layer_sizes = [n_features] + list(self.hidden_layer_sizes) + [2]
@@ -102,14 +115,15 @@ class MLP:
                 activations, zs = self._feedforward(X_batch)
 
                 self._backpropagation(X_batch, y_batch, activations, zs)
-            
-            y_pred_train = self._feedforward(X)[0][-1]  # prédiction sur tout X
-            train_loss = self.categorical_cross_entropy(y, y_pred_train)
+
+            activations, _ = self._feedforward(X)
+            train_loss = self._compute_loss(y, activations[-1])
             self.train_loss_history.append(train_loss)
 
-            y_pred_valid = self._feedforward(X_valid)[0][-1]  # sur tout X_valid
-            valid_loss = self.categorical_cross_entropy(y_valid, y_pred_valid)
+            activations, _ = self._feedforward(X_valid)
+            valid_loss = self._compute_loss(y_valid, activations[-1])
             self.valid_loss_history.append(valid_loss)
+
             print(f"Epoch {epoch+1}/{self.n_epochs}, Train Loss: {train_loss}, Valid Loss: {valid_loss}")
 
         plot_losses(self.train_loss_history, self.valid_loss_history)

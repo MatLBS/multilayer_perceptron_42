@@ -66,7 +66,7 @@ def draw_histogram(file: str) -> None:
 
 def plot_losses(train_loss_history, valid_loss_history):
     plt.plot(train_loss_history, label="Train Loss")
-    plt.plot(valid_loss_history, label="Valid Loss")
+    # plt.plot(valid_loss_history, label="Valid Loss")
     plt.title("Loss Function Convergence")
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
