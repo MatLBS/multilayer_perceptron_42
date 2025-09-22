@@ -1,5 +1,6 @@
 import numpy as np
-from toolkit_mlp.utils import plot_losses
+from toolkit_mlp.utils import plot_graphs
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 class MLP:
     def __init__(self, hidden_layer_sizes=(30, 30), learning_rate=0.01, n_epochs=1000, batch_size=32):
@@ -11,13 +12,15 @@ class MLP:
         self.biases = []
         self.train_loss_history = []
         self.valid_loss_history = []
+        self.train_accuracy_history = []
+        self.valid_accuracy_history = []
 
     def _relu(self, x):
         return np.maximum(0, x)
-    
+
     def _relu_derivative(self, x):
         return (x > 0).astype(float)
-    
+
     def _softmax(self, x):
         # return np.exp(x) / np.sum(np.exp(x))
         shifted_x = x - np.max(x, axis=-1, keepdims=True)
@@ -25,29 +28,8 @@ class MLP:
         exp_x = np.exp(shifted_x)
         sum_exp_x = np.sum(exp_x, axis=-1, keepdims=True)
         return exp_x / sum_exp_x
-    
-    def _sigmoid(self, z):
-        """Sigmoid activation function"""
-        return 1 / (1 + np.exp(-z))
-    
-    def categorical_cross_entropy(self, y_true, y_pred):
-        epsilon = 1e-12  # sécurité pour éviter log(0)
-        loss = 0
-        for i in range(len(y_pred)):
-            idx = np.argmax(y_true[i])
-            p = np.clip(y_pred[i][idx], epsilon, 1. - epsilon)
-            loss += -np.log(p)
-        return loss / len(y_pred)
-    
-    def predict_proba(self, X):
-        activations, _ = self._feedforward(X)
-        return activations[-1]
-    
-    def predict(self, X, threshold=0.5):
-        probabilities = self.predict_proba(X)
-        return (probabilities >= threshold).astype(int).flatten() # for 1D output
-    
-    def _compute_loss(self, y_true, y_pred):
+
+    def _binary_cross_entropy(self, y_true, y_pred):
         y_pred = np.clip(y_pred, 1e-10, 1 - 1e-10)
         loss = -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
         return loss
@@ -96,10 +78,15 @@ class MLP:
 
             self.weights[l] -= self.learning_rate * dW
             self.biases[l] -= self.learning_rate * db
-    
+
     def fit(self, X, y, X_valid, y_valid):
         n_samples, n_features = X.shape
         self._initialize_parameters(n_features)
+
+        print("x_train shape: ", X.shape)
+        print("y_train shape: ", y.shape)
+        print("x_valid shape: ", X_valid.shape)
+        print("y_valid shape: ", y_valid.shape)
 
         for epoch in range(self.n_epochs):
             # shuffle datasets
@@ -113,17 +100,23 @@ class MLP:
                 y_batch = y_shuffled[i:i + self.batch_size]
 
                 activations, zs = self._feedforward(X_batch)
-
                 self._backpropagation(X_batch, y_batch, activations, zs)
 
             activations, _ = self._feedforward(X)
-            train_loss = self._compute_loss(y, activations[-1])
+            train_loss = self._binary_cross_entropy(y, activations[-1])
             self.train_loss_history.append(train_loss)
+            y_pred = np.argmax(activations[-1], axis=1)
+            y_true = np.argmax(y, axis=1)
+            self.train_accuracy_history.append(accuracy_score(y_true, y_pred))
+
 
             activations, _ = self._feedforward(X_valid)
-            valid_loss = self._compute_loss(y_valid, activations[-1])
+            valid_loss = self._binary_cross_entropy(y_valid, activations[-1])
             self.valid_loss_history.append(valid_loss)
+            y_pred = np.argmax(activations[-1], axis=1)
+            y_true = np.argmax(y_valid, axis=1)
+            self.valid_accuracy_history.append(accuracy_score(y_true, y_pred))
 
             print(f"Epoch {epoch+1}/{self.n_epochs}, Train Loss: {train_loss}, Valid Loss: {valid_loss}")
 
-        plot_losses(self.train_loss_history, self.valid_loss_history)
+        plot_graphs(self.train_loss_history, self.valid_loss_history, self.train_accuracy_history, self.valid_accuracy_history)

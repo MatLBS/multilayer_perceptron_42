@@ -22,8 +22,8 @@ def train_model(file: str) -> None:
 
     model = MLP(
         hidden_layer_sizes=(30, 30),
-        learning_rate=0.0314,
-        n_epochs=2000,
+        learning_rate=0.01,
+        n_epochs=1000,
         batch_size=32
     )
 
@@ -33,8 +33,6 @@ def train_model(file: str) -> None:
 def main():
     assert len(sys.argv) == 2, "You must provide the dataset file path"
     assert os.path.exists(sys.argv[1]), "The file does not exists"
-    df = pd.read_csv(sys.argv[1])
-    # print(df.describe())
     train_model(sys.argv[1])
 
 

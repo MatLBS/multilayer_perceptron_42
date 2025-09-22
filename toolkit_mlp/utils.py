@@ -64,12 +64,23 @@ def draw_histogram(file: str) -> None:
     plt.show()
 
 
-def plot_losses(train_loss_history, valid_loss_history):
-    plt.plot(train_loss_history, label="Train Loss")
-    # plt.plot(valid_loss_history, label="Valid Loss")
-    plt.title("Loss Function Convergence")
-    plt.xlabel("Epochs")
-    plt.ylabel("Loss")
-    plt.legend()
-    plt.grid(True)
+def plot_graphs(train_loss_history, valid_loss_history, train_accuracy_history, valid_accuracy_history):
+
+    fig, ax = plt.subplots(1, 2, figsize=(12, 5))
+    ax[0].plot(train_loss_history, label="Train Loss")
+    # ax[0].plot(valid_loss_history, label="Valid Loss")
+    ax[0].set_title("Loss Function Convergence")
+    ax[0].set_xlabel("Epochs")
+    ax[0].set_ylabel("Loss")
+    ax[0].legend()
+    ax[0].grid(True)
+
+    ax[1].plot(train_accuracy_history, label="Train Accuracy")
+    ax[1].plot(valid_accuracy_history, label="Valid Accuracy")
+    ax[1].set_title("Accuracy Function Convergence")
+    ax[1].set_xlabel("Epochs")
+    ax[1].set_ylabel("Accuracy")
+    ax[1].legend()
+    ax[1].grid(True)
+
     plt.show()
