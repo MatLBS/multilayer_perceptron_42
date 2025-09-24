@@ -217,3 +217,5 @@ __marimo__/
 
 
 myenv/
+mlp_topology.json
+mlp_weights.npz

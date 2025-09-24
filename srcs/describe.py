@@ -1,7 +1,7 @@
 import os
 import sys
-from toolkit_mlp.describe_utils import describe
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from toolkit_mlp.describe_utils import describe
 
 
 def main():

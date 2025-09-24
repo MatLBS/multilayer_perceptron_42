@@ -1,7 +1,7 @@
 import os
 import sys
-from toolkit_mlp.utils import draw_histogram
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
+from toolkit_mlp.utils import draw_histogram
 
 
 def main():

@@ -1,13 +1,15 @@
 import numpy as np
 import json
 from toolkit_mlp.utils import plot_graphs
-from sklearn.metrics import (accuracy_score, 
-                            precision_score, 
-                            recall_score, 
-                            f1_score)
+from sklearn.metrics import (accuracy_score,
+                              precision_score,
+                              recall_score,
+                              f1_score)
+
 
 class MLP:
-    def __init__(self, hidden_layer_sizes=(30, 30), learning_rate=0.01, n_epochs=1000, batch_size=32, output_size=2):
+    def __init__(self, hidden_layer_sizes=(24, 24, 24), learning_rate=0.01,
+                 n_epochs=1000, batch_size=32, output_size=2):
         self.hidden_layer_sizes = hidden_layer_sizes
         self.learning_rate = learning_rate
         self.n_epochs = n_epochs
@@ -29,22 +31,24 @@ class MLP:
 
     def _softmax(self, x):
         shifted_x = x - np.max(x, axis=-1, keepdims=True)
-    
+
         exp_x = np.exp(shifted_x)
         sum_exp_x = np.sum(exp_x, axis=-1, keepdims=True)
         return exp_x / sum_exp_x
 
     def _binary_cross_entropy(self, y_true, y_pred):
         y_pred = np.clip(y_pred, 1e-10, 1 - 1e-10)
-        loss = -np.mean(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+        loss = -np.mean(y_true * np.log(y_pred) +
+                        (1 - y_true) * np.log(1 - y_pred))
         return loss
-    
+
     def _early_stopping(self):
-        if len(self.valid_loss_history) > 2 and (self.valid_loss_history[-1] > self.valid_loss_history[-2]):
+        if len(self.valid_loss_history) > 2 and \
+           (self.valid_loss_history[-1] > self.valid_loss_history[-2]):
             self.no_improve += 1
         else:
             self.no_improve = 0
-        if self.no_improve >= 10:
+        if self.no_improve > 5:
             print("Early stopping")
             return True
         return False
@@ -76,7 +80,7 @@ class MLP:
         activations.append(y_pred)
 
         return activations, zs
-    
+
     def _backpropagation(self, X_batch, y_batch, activations, zs):
 
         delta = activations[-1] - y_batch
@@ -124,7 +128,6 @@ class MLP:
             y_true = np.argmax(y, axis=1)
             self.train_accuracy_history.append(accuracy_score(y_true, y_pred))
 
-
             activations, _ = self._feedforward(X_valid)
             valid_loss = self._binary_cross_entropy(y_valid, activations[-1])
             self.valid_loss_history.append(valid_loss)
@@ -132,7 +135,7 @@ class MLP:
             y_true = np.argmax(y_valid, axis=1)
             self.valid_accuracy_history.append(accuracy_score(y_true, y_pred))
 
-            if (self._early_stopping()):
+            if self._early_stopping():
                 break
 
             print(f"Epoch {epoch+1}/{self.n_epochs}, Train Loss: {train_loss}, Valid Loss: {valid_loss}")
@@ -141,16 +144,21 @@ class MLP:
 
         plot_graphs(self.train_loss_history, self.valid_loss_history, self.train_accuracy_history, self.valid_accuracy_history)
 
+    def predict(self, X):
+        activations, _ = self._feedforward(X)
+        return np.argmax(activations[-1], axis=1)
+
     def save_model(self, X_train):
         topology = {
-        'hidden_layer_sizes': self.hidden_layer_sizes,
-        'input_size': X_train.shape[1],
-        'output_size': self.output_size,
-        'activation': 'relu',
-        'activation_output': 'softmax',
-    }
-        
+            'hidden_layer_sizes': self.hidden_layer_sizes,
+            'input_size': X_train.shape[1],
+            'output_size': self.output_size,
+            'learning_rate': self.learning_rate,
+            'n_epochs': self.n_epochs,
+            'batch_size': self.batch_size,
+            'activation': 'relu',
+            'activation_output': 'softmax',
+        }
         np.savez('mlp_weights.npz', *self.weights, *self.biases)
-
         with open('mlp_topology.json', 'w') as f:
             json.dump(topology, f)
