@@ -1,5 +1,6 @@
 import numpy as np
 import json
+from colorama import Fore, Style, init
 from toolkit_mlp.utils import plot_graphs
 from sklearn.metrics import (accuracy_score,
                               precision_score,
@@ -128,6 +129,10 @@ class MLP:
             y_true = np.argmax(y, axis=1)
             self.train_accuracy_history.append(accuracy_score(y_true, y_pred))
 
+            precision = precision_score(y_true, y_pred)
+            recall = recall_score(y_true, y_pred)
+            f1 = f1_score(y_true, y_pred)
+
             activations, _ = self._feedforward(X_valid)
             valid_loss = self._binary_cross_entropy(y_valid, activations[-1])
             self.valid_loss_history.append(valid_loss)
@@ -138,9 +143,12 @@ class MLP:
             if self._early_stopping():
                 break
 
-            print(f"Epoch {epoch+1}/{self.n_epochs}, Train Loss: {train_loss}, Valid Loss: {valid_loss}")
-
-
+            print(f"Epoch {epoch+1}/{self.n_epochs}, "
+                f"{Fore.YELLOW}Train Loss: {train_loss:.4f}{Style.RESET_ALL}, "
+                f"{Fore.CYAN}Valid Loss: {valid_loss:.4f}{Style.RESET_ALL}, "
+                f"{Fore.MAGENTA}Precision: {precision:.2f}{Style.RESET_ALL}, "
+                f"{Fore.RED}Recall: {recall:.2f}{Style.RESET_ALL}, "
+                f"{Fore.GREEN}F1: {f1:.2f}{Style.RESET_ALL}")
 
         plot_graphs(self.train_loss_history, self.valid_loss_history, self.train_accuracy_history, self.valid_accuracy_history)
 
