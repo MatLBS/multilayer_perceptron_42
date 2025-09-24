@@ -5,16 +5,21 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def _train_test_split(arr, ratio=0.8):
-    np.random.shuffle(arr)
-    total_rows = arr.shape[0]
+def _train_test_split(X, y, ratio=0.8):
+    np.random.seed(42)
+    np.random.shuffle(X)
+    np.random.seed(42)
+    np.random.shuffle(y)
+    total_rows = X.shape[0]
     train_size = int(total_rows * ratio)
 
     # Split data into test and train
-    train = arr[:train_size]
-    test = arr[train_size:]
+    X_train = X[:train_size]
+    X_test = X[train_size:]
+    y_train = y[:train_size]
+    y_test = y[train_size:]
 
-    return train, test
+    return X_train, X_test, y_train, y_test
 
 
 def preprocess_data(df):
