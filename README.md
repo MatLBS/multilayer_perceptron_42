@@ -49,8 +49,8 @@ hyperbolic tangent, and rectified linear unit).
 
 1. Clone the repository
 ```bash
-git clone https://github.com/MatLBS/ft_linear_regression_42.git
-cd ft_linear_regression_42
+git clone https://github.com/MatLBS/multilayer_perceptron_42.git
+cd multilayer_perceptron_42
 ```
 2. Create a virtual environment and install dependencies
 ```python
@@ -131,8 +131,8 @@ La seconde étape consiste à appliquer une fonction d’activation sur cette so
 
 1. Clone le dépôt
 ```bash
-git clone https://github.com/MatLBS/ft_linear_regression_42.git
-cd ft_linear_regression_42
+git clone https://github.com/MatLBS/multilayer_perceptron_42.git
+cd multilayer_perceptron_42
 ```
 2. Crée un environnement virtuel et installe les dépendances
 ```python
