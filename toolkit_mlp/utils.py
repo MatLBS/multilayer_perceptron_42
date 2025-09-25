@@ -62,6 +62,7 @@ def draw_histogram(file: str) -> None:
                 ax[i][j].hist(benign[columns[k]], color='blue', bins=20, alpha=0.4)
                 ax[i][j].hist(malignant[columns[k]], color='red', bins=20, alpha=0.4)
                 ax[i][j].set_title(f"{feature_list[k % 10]} {feat_type[k // 10]}")
+                ax[i][j].legend(['Benign', 'Malignant'], prop={'size': 6})
             else:
                 ax[i][j].axis('off')
             k += 1

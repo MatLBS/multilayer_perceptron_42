@@ -5,7 +5,7 @@ import numpy as np
 import argparse
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from toolkit_mlp.utils import _train_test_split, preprocess_data
-from toolkit_mlp.mlp_utils import MLP
+from toolkit_mlp.mlp_utils import MLP_SGD, MLP_Adam
 
 
 def train_model(args: argparse.Namespace):
@@ -17,7 +17,7 @@ def train_model(args: argparse.Namespace):
 
     X_train, X_valid, y_train, y_valid = _train_test_split(X, y)
 
-    model = MLP(
+    model = MLP_SGD(
         hidden_layer_sizes=args.layer,
         learning_rate=args.learning_rate,
         n_epochs=args.epochs,

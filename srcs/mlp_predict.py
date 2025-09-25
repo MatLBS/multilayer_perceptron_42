@@ -5,7 +5,7 @@ import json
 import pandas as pd
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from toolkit_mlp.utils import _train_test_split, preprocess_data
-from toolkit_mlp.mlp_utils import MLP
+from toolkit_mlp.mlp_utils import MLP_SGD
 from sklearn.metrics import accuracy_score
 
 
@@ -20,7 +20,7 @@ def predict_model(file_weights: str, file_topology: str, file_data: str):
 
     X_train, X_valid, y_train, y_valid = _train_test_split(X, y)
 
-    model = MLP(
+    model = MLP_SGD(
         hidden_layer_sizes=data_topology['hidden_layer_sizes'],
         learning_rate=data_topology['learning_rate'],
         n_epochs=data_topology['n_epochs'],
@@ -36,7 +36,7 @@ def predict_model(file_weights: str, file_topology: str, file_data: str):
     y_pred = model.predict(X_valid)
     y_true = np.argmax(y_valid, axis=1)
 
-    print(accuracy_score(y_true, y_pred))
+    print(f"Accuracy score: {accuracy_score(y_true, y_pred)}")
 
 
 def main():
